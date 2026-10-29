@@ -371,7 +371,7 @@ export function MapView({ token, style, relief, lightPreset, colorTheme, onCente
             <div className={`pin${m.id === selectedId ? ' selected' : ''}`}>
               {m.avatar ? <img src={m.avatar} alt={m.name} referrerPolicy="no-referrer" /> : <span>{initials(m.name)}</span>}
             </div>
-            {m.id !== selectedId && distances[m.id] && (
+            {!selectedId && distances[m.id] && (
               <div className="pin-label">
                 {formatDistance(distances[m.id]!.straight)}
                 {distances[m.id]!.driveDistance !== null && (

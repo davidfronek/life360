@@ -3,7 +3,9 @@ import type { Distance } from '../distances';
 import { formatDistance } from '../geo';
 import { MemberList } from './MemberList';
 import { PlaceList } from './PlaceList';
+import { useEffect, useState } from 'react';
 import { RoutePanel } from './RoutePanel';
+import { ChevronIcon } from './icons';
 
 export type Tab = 'members' | 'places' | 'history' | 'events';
 
@@ -34,6 +36,9 @@ const EVENT_LABEL = { arrive: 'dorazil(a) na', leave: 'opustil(a)', low_battery:
 
 export function Sidebar(p: Props) {
   const selected = p.members.find((m) => m.id === p.selectedId);
+  // Panel trasy je při každém označení člena sbalený, aby nezabíral místo v seznamu
+  const [routeOpen, setRouteOpen] = useState(false);
+  useEffect(() => setRouteOpen(false), [p.selectedId]);
 
   return (
     <aside className="sidebar">
@@ -53,29 +58,35 @@ export function Sidebar(p: Props) {
       </nav>
 
       {p.tab === 'members' && selected && (
-        <section className="detail">
-          <div className="detail-head">
-            <h3>{selected.name}</h3>
-            <button className="secondary small" onClick={() => p.onSelect(null)} aria-label="Zrušit výběr">
+        <section className={`route-bar${routeOpen ? ' open' : ''}`}>
+          <div className="route-bar-head">
+            <button className="route-toggle" onClick={() => setRouteOpen((o) => !o)} aria-expanded={routeOpen}>
+              <span className="chev">
+                <ChevronIcon size={14} />
+              </span>
+              <span className="grow">
+                Trasa k <strong>{selected.name}</strong>
+              </span>
+            </button>
+            <button className="secondary small" onClick={() => p.onSelect(null)} aria-label="Zrušit výběr" title="Zrušit výběr">
               ✕
             </button>
           </div>
-          <RoutePanel
-            key={selected.id}
-            member={selected}
-            members={p.members}
-            places={p.places}
-            mapboxToken={p.mapboxToken}
-            meId={p.meId}
-            onRoute={p.onRoute}
-          />
+          <div className="collapse">
+            <div className="collapse-inner">
+              <RoutePanel
+                key={selected.id}
+                member={selected}
+                members={p.members}
+                places={p.places}
+                mapboxToken={p.mapboxToken}
+                meId={p.meId}
+                onRoute={p.onRoute}
+              />
+            </div>
+          </div>
         </section>
       )}
-
-      {p.tab === 'members' && !p.meId && p.members.length > 0 && (
-        <p className="hint pad">Pro zobrazení vzdáleností nastavte v Nastavení, který člen jste vy.</p>
-      )}
-
       {p.tab === 'members' && (
         <MemberList
           members={p.members}

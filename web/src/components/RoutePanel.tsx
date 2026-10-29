@@ -70,12 +70,17 @@ export function RoutePanel({ member, members, places, mapboxToken, meId, onRoute
 
   const others = members.filter((m) => m.id !== member.id && m.id !== me?.id && m.lat !== null && m.lng !== null);
   const dest = to;
+  const profileLabel = { driving: 'autem', walking: 'pěšky', cycling: 'na kole' }[profile];
+
+  const summary = [
+    straight !== null ? `${formatDistance(straight)} vzdušně` : null,
+    routeData ? `${formatDistance(routeData.distance)} ${profileLabel} · ${formatDuration(routeData.duration)}` : null,
+  ].filter(Boolean);
 
   return (
     <div className="route">
-      <h4>{mobile ? 'Vzdálenost a navigace' : 'Vzdálenost a trasa'}</h4>
-      <label>
-        {reverse ? 'Cíl' : 'Výchozí bod'}
+      <label className="origin">
+        <span>{reverse ? 'Cíl' : 'Odkud'}</span>
         <select value={originKey} onChange={(e) => chooseOrigin(e.target.value)}>
           <option value="">— vyberte —</option>
           {me && <option value={`m:${me.id}`}>Moje poloha ({me.name})</option>}
@@ -102,7 +107,6 @@ export function RoutePanel({ member, members, places, mapboxToken, meId, onRoute
 
       {/* Na webu bez výchozího bodu nemá typ dopravy ani směr smysl; na mobilu určuje režim navigace */}
       {(originKey || mobile) && (
-        <>
         <div className="row">
           <div className="seg">
             {PROFILES.map((p) => (
@@ -111,38 +115,32 @@ export function RoutePanel({ member, members, places, mapboxToken, meId, onRoute
               </button>
             ))}
           </div>
-          <button className="secondary small" title="Prohodit směr" onClick={() => setReverse((r) => !r)}>
+          <button
+            className="secondary small"
+            title={reverse ? `Směr: ${member.name} → vybraný bod (kliknutím otočíte)` : `Směr: vybraný bod → ${member.name} (kliknutím otočíte)`}
+            onClick={() => setReverse((r) => !r)}
+          >
             ⇄
           </button>
         </div>
-        <p className="hint">
-          Směr: {reverse ? `${member.name} → vybraný bod` : `vybraný bod → ${member.name}`}
-        </p>
-        </>
       )}
 
-      {!meId && <p className="hint">Pro volbu „Moje poloha“ nastavte v Nastavení, který člen jste vy.</p>}
+      {!meId && <p className="hint">„Moje poloha“ nastavíte v Nastavení.</p>}
       {!memberPos && <p className="error">Poloha člena není známá.</p>}
-
-      {straight !== null && (
-        <div className="detail-row">
-          <span>Vzdušně</span>
-          <div>{formatDistance(straight)}</div>
-        </div>
-      )}
-      {route.isFetching && <p className="hint">Počítám trasu…</p>}
       {route.error && <p className="error">{(route.error as Error).message}</p>}
       {routeData === null && <p className="hint">Mezi body nebyla nalezena trasa.</p>}
+
+      {summary.length > 0 && (
+        <p className="route-summary">
+          {summary.join(' · ')}
+          {route.isFetching && <small> …</small>}
+        </p>
+      )}
+
       {routeData && (
         <>
-          <div className="detail-row">
-            <span>Po trase</span>
-            <div>
-              {formatDistance(routeData.distance)} · {formatDuration(routeData.duration)}
-            </div>
-          </div>
           <button className="link" onClick={() => setShowSteps((s) => !s)}>
-            {showSteps ? 'Skrýt pokyny' : 'Zobrazit pokyny k navigaci'}
+            {showSteps ? 'Skrýt pokyny' : 'Pokyny k cestě'}
           </button>
           {showSteps && (
             <ol className="steps">
