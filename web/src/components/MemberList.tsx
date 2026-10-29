@@ -3,6 +3,7 @@ import type { Member, Place } from '../api';
 import { distanceText, type Distance } from '../distances';
 import { initials, timeAgo } from '../geo';
 import { freshness, groupByCountry, groupMembers, plural, type GroupMode } from '../groups';
+import { Section, useCollapsed } from './Section';
 import { BatteryIcon, CarIcon, GlobeIcon, HomeIcon, MapPinIcon } from './icons';
 
 const STATUS_TITLE = { driving: 'Řídí', fresh: 'Aktuální poloha', stale: 'Poloha není aktuální' } as const;
@@ -35,6 +36,7 @@ export function MemberList({ members, places, distances, cities, countries, meId
     setMode(m);
     localStorage.setItem('groupMode', m);
   };
+  const { collapsed, toggle, setAll } = useCollapsed(`members:${mode}`);
   const groups = mode === 'countries' ? groupByCountry(members, countries) : groupMembers(members, places);
   const inPlaces = groupMembers(members, places)
     .filter((g) => g.kind === 'place')
@@ -54,6 +56,13 @@ export function MemberList({ members, places, distances, cities, countries, meId
             ? plural(countryCount, 'země', 'země', 'zemí')
             : `${inPlaces} na uložených místech`}
         </span>
+        <button
+          className="link"
+          onClick={() => setAll(groups.map((g) => g.key), collapsed.size < groups.length)}
+          title="Sbalit nebo rozbalit všechny skupiny"
+        >
+          {collapsed.size < groups.length ? 'Sbalit vše' : 'Rozbalit vše'}
+        </button>
         <div className="seg mini">
           <button className={mode === 'places' ? 'active' : ''} onClick={() => changeMode('places')}>
             Místa
@@ -64,12 +73,14 @@ export function MemberList({ members, places, distances, cities, countries, meId
         </div>
       </div>
       {groups.map((g) => (
-        <section key={g.key} className="group">
-          <h4 className="group-title">
-            {g.kind === 'place' ? <HomeIcon size={14} /> : g.kind === 'country' ? <GlobeIcon size={14} /> : <MapPinIcon size={14} />}
-            <span>{g.title}</span>
-            <em>{g.members.length}</em>
-          </h4>
+        <Section
+          key={g.key}
+          title={g.title}
+          count={g.members.length}
+          icon={g.kind === 'place' ? <HomeIcon size={14} /> : g.kind === 'country' ? <GlobeIcon size={14} /> : <MapPinIcon size={14} />}
+          collapsed={collapsed.has(g.key)}
+          onToggle={() => toggle(g.key)}
+        >
           <ul className="list">
             {g.members.map((m) => {
               const d = distances[m.id];
@@ -111,7 +122,7 @@ export function MemberList({ members, places, distances, cities, countries, meId
               );
             })}
           </ul>
-        </section>
+        </Section>
       ))}
     </div>
   );

@@ -4,6 +4,7 @@ import { whereMaps } from '../geocode';
 import { formatDistance, haversine } from '../geo';
 import { hasPosition, placeOfMember, plural } from '../groups';
 import { Avatar } from './MemberList';
+import { Section, useCollapsed } from './Section';
 import { GlobeIcon, HomeIcon } from './icons';
 
 interface Props {
@@ -23,6 +24,7 @@ export function PlaceList({ places, members, meId, selectedPlaceId, onSelectPlac
     localStorage.setItem('placeGroupMode', m);
   };
   const { cities, countries } = whereMaps(places);
+  const { collapsed, toggle, setAll } = useCollapsed('places');
 
   if (places.length === 0) {
     return <p className="empty-note">Zatím žádná místa. Načtou se z Life360 spolu s kruhem.</p>;
@@ -99,6 +101,15 @@ export function PlaceList({ places, members, meId, selectedPlaceId, onSelectPlac
           {plural(places.length, 'místo', 'místa', 'míst')}
           {countryCount > 0 && ` · ${plural(countryCount, 'země', 'země', 'zemí')}`}
         </span>
+        {mode === 'countries' && (
+          <button
+            className="link"
+            onClick={() => setAll(groups.map((g) => g.key), collapsed.size < groups.length)}
+            title="Sbalit nebo rozbalit všechny skupiny"
+          >
+            {collapsed.size < groups.length ? 'Sbalit vše' : 'Rozbalit vše'}
+          </button>
+        )}
         <div className="seg mini">
           <button className={mode === 'list' ? 'active' : ''} onClick={() => changeMode('list')}>
             Seznam
@@ -108,18 +119,24 @@ export function PlaceList({ places, members, meId, selectedPlaceId, onSelectPlac
           </button>
         </div>
       </div>
-      {groups.map((g) => (
-        <section key={g.key} className="group">
-          {mode === 'countries' && (
-            <h4 className="group-title">
-              <GlobeIcon size={14} />
-              <span>{g.title}</span>
-              <em>{g.places.length}</em>
-            </h4>
-          )}
-          <ul className="list">{g.places.map(renderPlace)}</ul>
-        </section>
-      ))}
+      {groups.map((g) =>
+        mode === 'countries' ? (
+          <Section
+            key={g.key}
+            title={g.title}
+            count={g.places.length}
+            icon={<GlobeIcon size={14} />}
+            collapsed={collapsed.has(g.key)}
+            onToggle={() => toggle(g.key)}
+          >
+            <ul className="list">{g.places.map(renderPlace)}</ul>
+          </Section>
+        ) : (
+          <ul key={g.key} className="list">
+            {g.places.map(renderPlace)}
+          </ul>
+        ),
+      )}
     </div>
   );
 }
