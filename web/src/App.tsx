@@ -17,7 +17,7 @@ export function App() {
 
   if (me.isPending) return <div className="center">Načítám…</div>;
   if (!me.data?.authenticated) {
-    return <Login onSuccess={() => void qc.invalidateQueries({ queryKey: ['me'] })} />;
+    return <Login firstRun={me.data?.firstRun ?? false} onSuccess={() => void qc.invalidateQueries({ queryKey: ['me'] })} />;
   }
   return (
     <Main

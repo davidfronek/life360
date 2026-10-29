@@ -2,17 +2,16 @@ import type { FastifyInstance } from 'fastify';
 import { config } from '../config.js';
 import { query } from '../db.js';
 import { hub } from '../hub.js';
-import { Life360Error, getCircles, getMe } from '../life360.js';
+import { connectLife360 } from '../connect.js';
 import {
   deleteLife360Token,
   getLife360Token,
   getMeMemberId,
   getSnapshot,
-  saveLife360Token,
   setMeMemberId,
   type MemberSnapshot,
 } from '../repo.js';
-import { status, triggerPoll } from '../worker.js';
+import { status } from '../worker.js';
 
 const MAX_HISTORY_POINTS = 20_000;
 
@@ -20,23 +19,6 @@ function parseDate(v: unknown): Date | null {
   if (typeof v !== 'string') return null;
   const d = new Date(v);
   return Number.isNaN(d.getTime()) ? null : d;
-}
-
-// Přijme token v různých podobách, v jakých se běžně kopíruje (cookie LIFE360_AUTH_TOKEN z prohlížeče,
-// hlavička Authorization, token z Home Assistantu): s prefixem "Bearer", URL-kódovaný, v uvozovkách
-export function normalizeToken(raw: string): string {
-  let t = raw.trim();
-  t = t.replace(/^(?:set-)?cookie:\s*/i, '').replace(/^LIFE360_AUTH_TOKEN\s*=\s*/i, '');
-  t = t.replace(/^authorization:\s*/i, '');
-  t = t.replace(/^["']|["']$/g, '').replace(/;.*$/, '');
-  if (t.includes('%')) {
-    try {
-      t = decodeURIComponent(t);
-    } catch {
-      /* ponechá původní hodnotu */
-    }
-  }
-  return t.replace(/^(?:bearer\s+)+/i, '').trim();
 }
 
 export async function protectedRoutes(app: FastifyInstance): Promise<void> {
@@ -55,30 +37,8 @@ export async function protectedRoutes(app: FastifyInstance): Promise<void> {
   app.put<{ Body: { token?: unknown } }>('/api/settings/life360', async (req, reply) => {
     const raw = req.body?.token;
     if (typeof raw !== 'string') return reply.code(400).send({ error: 'Chybí token' });
-    const token = normalizeToken(raw);
-    if (token.length < 10 || token.length > 4096 || /\s/.test(token)) {
-      return reply.code(400).send({ error: 'Neplatný formát tokenu (token nesmí obsahovat mezery)' });
-    }
-    try {
-      await getCircles(token);
-    } catch (err) {
-      if (err instanceof Life360Error && err.isAuth) {
-        const why =
-          err.status === 403
-            ? 'HTTP 403 – Life360 odmítl požadavek (token, nebo blokace IP adresy serveru)'
-            : `HTTP ${err.status}${err.reason ? `, ${err.reason}` : ''} – token je neplatný nebo expiroval`;
-        return reply.code(400).send({ error: `Life360 token byl odmítnut: ${why}. Délka zadaného tokenu: ${token.length} znaků.` });
-      }
-      return reply.code(502).send({ error: (err as Error).message });
-    }
-    await saveLife360Token(token);
-    // Určení, který člen kruhu je majitel tokenu ("Moje poloha"); při selhání lze zvolit ručně
-    try {
-      await setMeMemberId(await getMe(token));
-    } catch {
-      await setMeMemberId(null);
-    }
-    triggerPoll();
+    const result = await connectLife360(raw);
+    if (!result.ok) return reply.code(result.status).send({ error: result.error });
     return { ok: true };
   });
 

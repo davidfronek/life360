@@ -94,7 +94,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 const json = (method: string, body: unknown): RequestInit => ({ method, body: JSON.stringify(body) });
 
 export const api = {
-  me: () => request<{ authenticated: boolean }>('/api/auth/me'),
+  me: () => request<{ authenticated: boolean; firstRun: boolean }>('/api/auth/me'),
   login: (accessToken: string) => request('/api/auth/login', json('POST', { accessToken })),
   logout: () => request('/api/auth/logout', { method: 'POST' }),
   config: () => request<{ mapboxToken: string }>('/api/config'),
