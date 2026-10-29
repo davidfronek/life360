@@ -124,6 +124,30 @@ export const GlobeIcon = (p: P) => (
   </Svg>
 );
 
+export const BusIcon = (p: P) => (
+  <Svg {...p}>
+    <rect x="4" y="3" width="16" height="15" rx="3" />
+    <path d="M4 11h16M8 21v-3M16 21v-3" />
+    <circle cx="8" cy="14.5" r=".6" />
+    <circle cx="16" cy="14.5" r=".6" />
+  </Svg>
+);
+
+export const WalkIcon = (p: P) => (
+  <Svg {...p}>
+    <circle cx="13" cy="4" r="1.7" />
+    <path d="m9 21 2.5-6.5L9 12.5l1.5-4.5 3 1.5 2.5 3M11.5 14.5 14 17l.5 4" />
+  </Svg>
+);
+
+export const BikeIcon = (p: P) => (
+  <Svg {...p}>
+    <circle cx="5.5" cy="17" r="3.5" />
+    <circle cx="18.5" cy="17" r="3.5" />
+    <path d="M5.5 17 9 8h5l4.5 9M9 8 7.5 6H6M12 17l-2-5h6" />
+  </Svg>
+);
+
 export const NavigationIcon = (p: P) => (
   <Svg {...p}>
     <path d="m3 11 18-8-8 18-2-8-8-2Z" />

@@ -50,14 +50,15 @@ export function navigationUrl(app: NavApp, profile: Profile, from: LatLng | null
   const dest = `${to.lat},${to.lng}`;
   switch (app) {
     case 'google': {
-      const mode = { driving: 'driving', walking: 'walking', cycling: 'bicycling' }[profile];
+      const mode = { driving: 'driving', walking: 'walking', cycling: 'bicycling', transit: 'transit' }[profile];
       return (
         `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=${mode}` +
         (from ? `&origin=${from.lat},${from.lng}` : '')
       );
     }
     case 'mapy': {
-      const type = { driving: 'car_fast_traffic', walking: 'foot_fast', cycling: 'bike_road' }[profile];
+      // Mapy.com v URL nemá režim MHD; použije se pěší trasa a v aplikaci lze přepnout
+      const type = { driving: 'car_fast_traffic', walking: 'foot_fast', cycling: 'bike_road', transit: 'foot_fast' }[profile];
       return (
         `https://mapy.com/fnc/v1/route?mapset=traffic&routeType=${type}&navigate=true` +
         (from ? `&start=${from.lng},${from.lat}` : '') +
@@ -67,7 +68,7 @@ export function navigationUrl(app: NavApp, profile: Profile, from: LatLng | null
     case 'waze':
       return `https://waze.com/ul?ll=${dest}&navigate=yes`;
     case 'apple': {
-      const flag = { driving: 'd', walking: 'w', cycling: 'w' }[profile];
+      const flag = { driving: 'd', walking: 'w', cycling: 'w', transit: 'r' }[profile];
       return `https://maps.apple.com/?daddr=${dest}&dirflg=${flag}` + (from ? `&saddr=${from.lat},${from.lng}` : '');
     }
   }

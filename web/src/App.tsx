@@ -9,6 +9,7 @@ import { Sidebar, type Tab } from './components/Sidebar';
 import { todayLocal } from './geo';
 import { useLightPreset, type LightMode } from './sun';
 import { useDistancesFromMe, type RouteKind } from './distances';
+import { fetchRoute, routeKey, type RouteInfo } from './directions';
 import { whereMaps } from './geocode';
 
 export function App() {
@@ -96,15 +97,26 @@ function Main({ onLogout }: { onLogout: () => void }) {
   const ready = config.data?.mapboxToken;
   const { cities, countries } = useMemo(() => whereMaps(members.data ?? []), [members.data]);
   const distances = useDistancesFromMe(members.data ?? [], settings.data?.meMemberId ?? null, ready ?? '');
-  // Trasa na mapě: zobrazí se po kliknutí na vzdálenost v tooltipu vybraného člena
+  // Trasa na mapě: zobrazí se po výběru způsobu dopravy v tooltipu vybraného člena
   const sel = selectedId ? distances[selectedId] : undefined;
-  const geometry = sel?.geometry ?? null;
+  const profile = routeKind && routeKind !== 'straight' ? routeKind : null;
+  const routeQ = useQuery({
+    queryKey: routeKey(profile ?? 'driving', sel?.from ?? null, sel?.to ?? null),
+    queryFn: () => fetchRoute(ready!, profile!, sel!.from, sel!.to),
+    enabled: !!profile && !!sel && !!ready,
+    staleTime: 60_000,
+  });
+  const routeData = profile && sel ? routeQ.data : null;
+  const geometry = routeData?.geometry ?? null;
   const fromLat = sel?.from.lat, fromLng = sel?.from.lng, toLat = sel?.to.lat, toLng = sel?.to.lng;
   const route = useMemo<GeoJSON.LineString | null>(() => {
     if (!routeKind || fromLat === undefined) return null;
-    if (routeKind === 'drive') return geometry;
-    return { type: 'LineString', coordinates: [[fromLng!, fromLat], [toLng!, toLat!]] };
+    if (routeKind === 'straight') return { type: 'LineString', coordinates: [[fromLng!, fromLat], [toLng!, toLat!]] };
+    return geometry;
   }, [routeKind, geometry, fromLat, fromLng, toLat, toLng]);
+  const routeInfo: RouteInfo | null = routeData
+    ? { distance: routeData.distance, duration: routeData.duration, summary: routeData.summary }
+    : null;
   // Osvětlení mapy se řídí tím, kam se uživatel dívá (střed mapy), takže funguje i pro členy v různých časových pásmech
   const [center, setCenter] = useState<{ lat: number; lng: number } | null>(null);
   const sunSpot = (members.data ?? []).find((m) => m.lat !== null && m.lng !== null);
@@ -206,6 +218,8 @@ function Main({ onLogout }: { onLogout: () => void }) {
             history={tab === 'history' && history.data ? history.data.points : null}
             route={route}
             routeKind={routeKind}
+            routeInfo={routeInfo}
+            routeLoading={routeQ.isFetching}
             onRouteKind={setRouteKind}
             events={events.data ?? []}
             distances={distances}

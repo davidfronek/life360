@@ -3,7 +3,8 @@ import type { Member } from './api';
 import { fetchRoute, routeKey, type LatLng } from './directions';
 import { formatDistance, formatDuration, haversine } from './geo';
 
-export type RouteKind = 'drive' | 'straight';
+// Způsob zobrazení vzdálenosti: vzdušná čára nebo trasa podle způsobu dopravy
+export type RouteKind = 'straight' | 'driving' | 'walking' | 'cycling' | 'transit';
 
 export interface Distance {
   straight: number;

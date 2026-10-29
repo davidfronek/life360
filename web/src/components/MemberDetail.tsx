@@ -7,6 +7,7 @@ import { reverseAddress } from '../geocode';
 import { localTimeAt } from '../localTime';
 import { NAV_APPS, isMobileDevice, navigationUrl, useNavApp } from '../navApps';
 import type { RouteKind } from '../distances';
+import type { RouteInfo } from '../directions';
 import {
   BatteryIcon,
   MoonIcon,
@@ -20,6 +21,9 @@ import {
   MapPinIcon,
   NavigationIcon,
   StraightLineIcon,
+  WalkIcon,
+  BusIcon,
+  BikeIcon,
 } from './icons';
 
 const EVENT_LABEL = { arrive: 'Příchod', leave: 'Odchod', low_battery: 'Slabá baterie' } as const;
@@ -40,11 +44,21 @@ interface Props {
   distance?: Distance;
   city?: string;
   routeKind: RouteKind | null;
+  routeInfo: RouteInfo | null;
+  routeLoading: boolean;
   onRoute: (kind: RouteKind | null) => void;
 }
 
+const MODES = [
+  { kind: 'straight', label: 'Vzdušnou čarou', Icon: StraightLineIcon },
+  { kind: 'driving', label: 'Autem', Icon: CarIcon },
+  { kind: 'walking', label: 'Pěšky', Icon: WalkIcon },
+  { kind: 'cycling', label: 'Na kole', Icon: BikeIcon },
+  { kind: 'transit', label: 'MHD', Icon: BusIcon },
+] as const;
+
 // Obsah tooltipu u vybraného člena na mapě
-export function MemberDetail({ member: m, events, mapboxToken, distance, city, routeKind, onRoute }: Props) {
+export function MemberDetail({ member: m, events, mapboxToken, distance, city, routeKind, routeInfo, routeLoading, onRoute }: Props) {
   const navApp = useNavApp();
   const mobile = isMobileDevice();
   const [copied, setCopied] = useState(false);
@@ -96,37 +110,44 @@ export function MemberDetail({ member: m, events, mapboxToken, distance, city, r
         </p>
       )}
       {distance && (
-        <p className="tip-line dist">
-          <button
-            className={`chip${routeKind === 'straight' ? ' active' : ''}`}
-            onClick={() => onRoute(routeKind === 'straight' ? null : 'straight')}
-            title="Zobrazit vzdušnou čáru na mapě"
-          >
-            <StraightLineIcon />
-            {formatDistance(distance.straight)} vzdušně
-          </button>
-          {distance.driveDistance !== null && (
-            <button
-              className={`chip${routeKind === 'drive' ? ' active' : ''}`}
-              onClick={() => onRoute(routeKind === 'drive' ? null : 'drive')}
-              title="Zobrazit trasu autem na mapě"
+        <div className="mode-row">
+          <div className="modes" role="group" aria-label="Způsob dopravy">
+            {MODES.map(({ kind, label, Icon }) => (
+              <button
+                key={kind}
+                className={routeKind === kind ? 'active' : ''}
+                onClick={() => onRoute(routeKind === kind ? null : kind)}
+                title={`${label} – zobrazit na mapě`}
+                aria-pressed={routeKind === kind}
+              >
+                <Icon size={15} />
+              </button>
+            ))}
+          </div>
+          <span className="mode-text">
+            {routeKind && routeKind !== 'straight'
+              ? routeInfo
+                ? routeInfo.summary
+                  ? `${formatDuration(routeInfo.duration)} · ${routeInfo.summary}`
+                  : `${formatDistance(routeInfo.distance)} · ${formatDuration(routeInfo.duration)}`
+                : routeLoading
+                  ? 'Hledám…'
+                  : 'Trasa nenalezena'
+              : `${formatDistance(distance.straight)} vzdušně`}
+          </span>
+          {mobile && (
+            <a
+              className="nav-link"
+              href={navigationUrl(navApp, routeKind && routeKind !== 'straight' ? routeKind : 'driving', distance.from, distance.to)}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={`Navigovat v aplikaci ${NAV_APPS.find((a) => a.id === navApp)!.label}`}
+              aria-label="Navigovat"
             >
-              <CarIcon />
-              {formatDistance(distance.driveDistance)} · {formatDuration(distance.driveDuration!)}
-            </button>
+              <NavigationIcon size={15} />
+            </a>
           )}
-        </p>
-      )}
-      {mobile && distance && (
-        <a
-          className="nav-btn"
-          href={navigationUrl(navApp, 'driving', distance.from, distance.to)}
-          target="_blank"
-          rel="noopener noreferrer"
-          title={`Otevřít v aplikaci ${NAV_APPS.find((a) => a.id === navApp)!.label}`}
-        >
-          <NavigationIcon size={16} /> Navigovat
-        </a>
+        </div>
       )}      <p className="tip-line muted">
         {m.placeName ? <HomeIcon /> : <CrosshairIcon />}
         <span>
