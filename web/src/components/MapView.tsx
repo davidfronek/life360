@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import MapGL, { Layer, Marker, Popup, Source, type MapRef } from 'react-map-gl/mapbox';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type { AppEvent, HistoryPoint, Member, Place } from '../api';
-import type { Distance } from '../distances';
+import type { Distance, RouteKind } from '../distances';
 import { circlePolygon, formatDistance, initials } from '../geo';
 import type { LightPreset } from '../sun';
 import { MemberDetail } from './MemberDetail';
@@ -56,9 +56,11 @@ interface Props {
   events: AppEvent[];
   distances: Record<string, Distance>;
   cities: Record<string, string>;
+  routeKind: RouteKind | null;
+  onRouteKind: (kind: RouteKind | null) => void;
 }
 
-export function MapView({ token, style, relief, lightPreset, colorTheme, onCenterChange, members, places, selectedId, selectedPlaceId, onSelect, history, route, events, distances, cities }: Props) {
+export function MapView({ token, style, relief, lightPreset, colorTheme, onCenterChange, members, places, selectedId, selectedPlaceId, onSelect, history, route, events, distances, cities, routeKind, onRouteKind }: Props) {
   const mapRef = useRef<MapRef>(null);
   const fitted = useRef(false);
   const [loaded, setLoaded] = useState(false);
@@ -407,6 +409,8 @@ export function MapView({ token, style, relief, lightPreset, colorTheme, onCente
             mapboxToken={token}
             distance={distances[selectedMember.id]}
             city={cities[selectedMember.id]}
+            routeKind={routeKind}
+            onRoute={onRouteKind}
           />
         </Popup>
       )}

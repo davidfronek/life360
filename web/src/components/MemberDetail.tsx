@@ -5,6 +5,8 @@ import type { Distance } from '../distances';
 import { formatDistance, formatDuration, timeAgo } from '../geo';
 import { reverseAddress } from '../geocode';
 import { localTimeAt } from '../localTime';
+import { NAV_APPS, isMobileDevice, navigationUrl, useNavApp } from '../navApps';
+import type { RouteKind } from '../distances';
 import {
   BatteryIcon,
   MoonIcon,
@@ -16,6 +18,7 @@ import {
   ExternalLinkIcon,
   HomeIcon,
   MapPinIcon,
+  NavigationIcon,
   StraightLineIcon,
 } from './icons';
 
@@ -36,10 +39,14 @@ interface Props {
   mapboxToken: string;
   distance?: Distance;
   city?: string;
+  routeKind: RouteKind | null;
+  onRoute: (kind: RouteKind | null) => void;
 }
 
 // Obsah tooltipu u vybraného člena na mapě
-export function MemberDetail({ member: m, events, mapboxToken, distance, city }: Props) {
+export function MemberDetail({ member: m, events, mapboxToken, distance, city, routeKind, onRoute }: Props) {
+  const navApp = useNavApp();
+  const mobile = isMobileDevice();
   const [copied, setCopied] = useState(false);
   const [open, setOpen] = useState(false);
   const hasPos = m.lat !== null && m.lng !== null;
@@ -90,19 +97,37 @@ export function MemberDetail({ member: m, events, mapboxToken, distance, city }:
       )}
       {distance && (
         <p className="tip-line dist">
-          <span className="chip">
+          <button
+            className={`chip${routeKind === 'straight' ? ' active' : ''}`}
+            onClick={() => onRoute(routeKind === 'straight' ? null : 'straight')}
+            title="Zobrazit vzdušnou čáru na mapě"
+          >
             <StraightLineIcon />
             {formatDistance(distance.straight)} vzdušně
-          </span>
+          </button>
           {distance.driveDistance !== null && (
-            <span className="chip">
+            <button
+              className={`chip${routeKind === 'drive' ? ' active' : ''}`}
+              onClick={() => onRoute(routeKind === 'drive' ? null : 'drive')}
+              title="Zobrazit trasu autem na mapě"
+            >
               <CarIcon />
               {formatDistance(distance.driveDistance)} · {formatDuration(distance.driveDuration!)}
-            </span>
+            </button>
           )}
         </p>
       )}
-      <p className="tip-line muted">
+      {mobile && distance && (
+        <a
+          className="nav-btn"
+          href={navigationUrl(navApp, 'driving', distance.from, distance.to)}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={`Otevřít v aplikaci ${NAV_APPS.find((a) => a.id === navApp)!.label}`}
+        >
+          <NavigationIcon size={16} /> Navigovat
+        </a>
+      )}      <p className="tip-line muted">
         {m.placeName ? <HomeIcon /> : <CrosshairIcon />}
         <span>
           {m.placeName ?? 'Mimo uložená místa'} · {timeAgo(m.ts)}

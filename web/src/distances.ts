@@ -3,11 +3,16 @@ import type { Member } from './api';
 import { fetchRoute, routeKey, type LatLng } from './directions';
 import { formatDistance, formatDuration, haversine } from './geo';
 
+export type RouteKind = 'drive' | 'straight';
+
 export interface Distance {
   straight: number;
   driveDistance: number | null;
   driveDuration: number | null;
   loading: boolean;
+  from: LatLng;
+  to: LatLng;
+  geometry: GeoJSON.LineString | null;
 }
 
 const pos = (m: Member): LatLng | null => (m.lat !== null && m.lng !== null ? { lat: m.lat, lng: m.lng } : null);
@@ -37,6 +42,9 @@ export function useDistancesFromMe(members: Member[], meId: string | null, token
       driveDistance: r.data?.distance ?? null,
       driveDuration: r.data?.duration ?? null,
       loading: r.isFetching,
+      from: from!,
+      to: t.to,
+      geometry: r.data?.geometry ?? null,
     };
   });
   return result;

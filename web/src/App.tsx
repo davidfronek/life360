@@ -8,7 +8,7 @@ import { Settings } from './components/Settings';
 import { Sidebar, type Tab } from './components/Sidebar';
 import { todayLocal } from './geo';
 import { useLightPreset, type LightMode } from './sun';
-import { useDistancesFromMe } from './distances';
+import { useDistancesFromMe, type RouteKind } from './distances';
 import { whereMaps } from './geocode';
 
 export function App() {
@@ -39,6 +39,7 @@ function Main({ onLogout }: { onLogout: () => void }) {
   // Výběr člena a místa se vzájemně vylučuje
   const selectMember = (id: string | null) => {
     setSelectedId(id);
+    setRouteKind(null);
     if (id) setSelectedPlaceId(null);
   };
   const selectPlace = (id: string | null) => {
@@ -60,7 +61,7 @@ function Main({ onLogout }: { onLogout: () => void }) {
   const [lightMode, setLightMode] = useState<LightMode>('auto');
   const [colorTheme, setColorTheme] = useState<ColorTheme>(() => (localStorage.getItem('mapTheme') as ColorTheme) || 'vivid');
   const [date, setDate] = useState(todayLocal());
-  const [route, setRoute] = useState<GeoJSON.LineString | null>(null);
+  const [routeKind, setRouteKind] = useState<RouteKind | null>(null);
 
   const config = useQuery({ queryKey: ['config'], queryFn: api.config });
   const settings = useQuery({ queryKey: ['settings'], queryFn: api.life360Settings });
@@ -95,6 +96,15 @@ function Main({ onLogout }: { onLogout: () => void }) {
   const ready = config.data?.mapboxToken;
   const { cities, countries } = useMemo(() => whereMaps(members.data ?? []), [members.data]);
   const distances = useDistancesFromMe(members.data ?? [], settings.data?.meMemberId ?? null, ready ?? '');
+  // Trasa na mapě: zobrazí se po kliknutí na vzdálenost v tooltipu vybraného člena
+  const sel = selectedId ? distances[selectedId] : undefined;
+  const geometry = sel?.geometry ?? null;
+  const fromLat = sel?.from.lat, fromLng = sel?.from.lng, toLat = sel?.to.lat, toLng = sel?.to.lng;
+  const route = useMemo<GeoJSON.LineString | null>(() => {
+    if (!routeKind || fromLat === undefined) return null;
+    if (routeKind === 'drive') return geometry;
+    return { type: 'LineString', coordinates: [[fromLng!, fromLat], [toLng!, toLat!]] };
+  }, [routeKind, geometry, fromLat, fromLng, toLat, toLng]);
   // Osvětlení mapy se řídí tím, kam se uživatel dívá (střed mapy), takže funguje i pro členy v různých časových pásmech
   const [center, setCenter] = useState<{ lat: number; lng: number } | null>(null);
   const sunSpot = (members.data ?? []).find((m) => m.lat !== null && m.lng !== null);
@@ -161,7 +171,6 @@ function Main({ onLogout }: { onLogout: () => void }) {
         mapboxToken={config.data?.mapboxToken ?? ''}
         meId={settings.data?.meMemberId ?? null}
         places={places.data ?? []}
-        onRoute={setRoute}
         events={events.data ?? []}
         history={history.data}
         historyLoading={history.isFetching}
@@ -196,6 +205,8 @@ function Main({ onLogout }: { onLogout: () => void }) {
             selectedPlaceId={selectedPlaceId}
             history={tab === 'history' && history.data ? history.data.points : null}
             route={route}
+            routeKind={routeKind}
+            onRouteKind={setRouteKind}
             events={events.data ?? []}
             distances={distances}
             cities={cities}
