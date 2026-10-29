@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.env
+*.log
+deploy/life360-data.sql
