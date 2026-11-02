@@ -11,6 +11,7 @@ import { useLightPreset, type LightMode } from './sun';
 import { useDistancesFromMe, type RouteKind } from './distances';
 import { fetchRoute, routeKey, type RouteInfo } from './directions';
 import { whereMaps } from './geocode';
+import { useTravel } from './travel';
 
 export function App() {
   const qc = useQueryClient();
@@ -95,6 +96,7 @@ function Main({ onLogout }: { onLogout: () => void }) {
   });
 
   const ready = config.data?.mapboxToken;
+  const travel = useTravel(members.data ?? [], ready ?? '');
   const { cities, countries } = useMemo(() => whereMaps(members.data ?? []), [members.data]);
   const distances = useDistancesFromMe(members.data ?? [], settings.data?.meMemberId ?? null, ready ?? '');
   // Trasa na mapě: zobrazí se po výběru způsobu dopravy v tooltipu vybraného člena
@@ -175,6 +177,7 @@ function Main({ onLogout }: { onLogout: () => void }) {
         members={members.data ?? []}
         distances={distances}
         cities={cities}
+        travel={travel}
         countries={countries}
         selectedId={selectedId}
         onSelect={selectMember}
@@ -224,6 +227,7 @@ function Main({ onLogout }: { onLogout: () => void }) {
             events={events.data ?? []}
             distances={distances}
             cities={cities}
+            travel={travel}
           />
         ) : (
           <div className="center">

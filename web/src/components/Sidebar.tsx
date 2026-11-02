@@ -1,5 +1,6 @@
 import type { AppEvent, History, Member, Place } from '../api';
 import type { Distance } from '../distances';
+import type { Travel } from '../travel';
 import { formatDistance } from '../geo';
 import { MemberList } from './MemberList';
 import { PlaceList } from './PlaceList';
@@ -12,6 +13,7 @@ interface Props {
   members: Member[];
   distances: Record<string, Distance>;
   cities: Record<string, string>;
+  travel: Record<string, Travel>;
   countries: Record<string, string>;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
@@ -56,6 +58,7 @@ export function Sidebar(p: Props) {
           places={p.places}
           distances={p.distances}
           cities={p.cities}
+          travel={p.travel}
           countries={p.countries}
           meId={p.meId}
           selectedId={p.selectedId}

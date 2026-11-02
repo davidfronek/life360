@@ -4,7 +4,9 @@ import { distanceText, type Distance } from '../distances';
 import { initials, timeAgo } from '../geo';
 import { freshness, groupByCountry, groupMembers, plural, type GroupMode } from '../groups';
 import { Section, useCollapsed } from './Section';
-import { BatteryIcon, CarIcon, GlobeIcon, HomeIcon, MapPinIcon } from './icons';
+import { BatteryIcon, GlobeIcon, HomeIcon, MapPinIcon } from './icons';
+import { TravelIcon, travelTitle } from './TravelIcon';
+import type { Travel } from '../travel';
 
 const STATUS_TITLE = { driving: 'Řídí', fresh: 'Aktuální poloha', stale: 'Poloha není aktuální' } as const;
 
@@ -23,6 +25,7 @@ interface Props {
   members: Member[];
   places: Place[];
   distances: Record<string, Distance>;
+  travel: Record<string, Travel>;
   cities: Record<string, string>;
   countries: Record<string, string>;
   meId: string | null;
@@ -30,7 +33,7 @@ interface Props {
   onSelect: (id: string) => void;
 }
 
-export function MemberList({ members, places, distances, cities, countries, meId, selectedId, onSelect }: Props) {
+export function MemberList({ members, places, distances, travel, cities, countries, meId, selectedId, onSelect }: Props) {
   const [mode, setMode] = useState<GroupMode>(() => (localStorage.getItem('groupMode') === 'countries' ? 'countries' : 'places'));
   const changeMode = (m: GroupMode) => {
     setMode(m);
@@ -103,9 +106,9 @@ export function MemberList({ members, places, distances, cities, countries, meId
                       </small>
                     )}
                     <small className="sub">
-                      {m.isDriving && (
-                        <span className="chip driving">
-                          <CarIcon size={12} /> Řídí
+                      {travel[m.id] && (
+                        <span className="chip travel" title={travelTitle(travel[m.id]!)}>
+                          <TravelIcon mode={travel[m.id]!.mode} size={13} /> {travel[m.id]!.kmh} km/h
                         </span>
                       )}
                       {timeAgo(m.ts)}

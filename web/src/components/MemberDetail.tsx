@@ -7,6 +7,8 @@ import { reverseAddress } from '../geocode';
 import { localTimeAt } from '../localTime';
 import { NAV_APPS, isMobileDevice, navigationUrl, useNavApp } from '../navApps';
 import type { RouteKind } from '../distances';
+import { TRAVEL_LABEL, type Travel } from '../travel';
+import { TravelIcon } from './TravelIcon';
 import type { RouteInfo } from '../directions';
 import {
   BatteryIcon,
@@ -43,6 +45,7 @@ interface Props {
   mapboxToken: string;
   distance?: Distance;
   city?: string;
+  travel?: Travel;
   routeKind: RouteKind | null;
   routeInfo: RouteInfo | null;
   routeLoading: boolean;
@@ -58,7 +61,7 @@ const MODES = [
 ] as const;
 
 // Obsah tooltipu u vybraného člena na mapě
-export function MemberDetail({ member: m, events, mapboxToken, distance, city, routeKind, routeInfo, routeLoading, onRoute }: Props) {
+export function MemberDetail({ member: m, events, mapboxToken, distance, city, travel, routeKind, routeInfo, routeLoading, onRoute }: Props) {
   const navApp = useNavApp();
   const mobile = isMobileDevice();
   const [copied, setCopied] = useState(false);
@@ -98,6 +101,14 @@ export function MemberDetail({ member: m, events, mapboxToken, distance, city, r
       </div>
 
       {city && <p className="tip-line city-line">{city}</p>}
+      {travel && (
+        <p className="tip-line travel-line">
+          <TravelIcon mode={travel.mode} />
+          <span>
+            {TRAVEL_LABEL[travel.mode]} · {travel.kmh} km/h
+          </span>
+        </p>
+      )}
       {hasPos && (
         <p className="tip-line">
           <MapPinIcon />

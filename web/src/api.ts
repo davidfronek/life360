@@ -9,6 +9,7 @@ export interface Member {
   battery: number | null;
   charging: boolean | null;
   isDriving: boolean | null;
+  speed: number | null;
   placeName: string | null;
   city: string | null;
   country: string | null;

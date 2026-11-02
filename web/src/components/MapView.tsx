@@ -3,6 +3,8 @@ import MapGL, { Layer, Marker, Popup, Source, type MapRef } from 'react-map-gl/m
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type { AppEvent, HistoryPoint, Member, Place } from '../api';
 import type { Distance, RouteKind } from '../distances';
+import type { Travel } from '../travel';
+import { TravelIcon, travelTitle } from './TravelIcon';
 import type { RouteInfo } from '../directions';
 import { circlePolygon, formatDistance, initials } from '../geo';
 import type { LightPreset } from '../sun';
@@ -57,13 +59,14 @@ interface Props {
   events: AppEvent[];
   distances: Record<string, Distance>;
   cities: Record<string, string>;
+  travel: Record<string, Travel>;
   routeKind: RouteKind | null;
   routeInfo: RouteInfo | null;
   routeLoading: boolean;
   onRouteKind: (kind: RouteKind | null) => void;
 }
 
-export function MapView({ token, style, relief, lightPreset, colorTheme, onCenterChange, members, places, selectedId, selectedPlaceId, onSelect, history, route, events, distances, cities, routeKind, routeInfo, routeLoading, onRouteKind }: Props) {
+export function MapView({ token, style, relief, lightPreset, colorTheme, onCenterChange, members, places, selectedId, selectedPlaceId, onSelect, history, route, events, distances, cities, travel, routeKind, routeInfo, routeLoading, onRouteKind }: Props) {
   const mapRef = useRef<MapRef>(null);
   const fitted = useRef(false);
   const [loaded, setLoaded] = useState(false);
@@ -376,6 +379,11 @@ export function MapView({ token, style, relief, lightPreset, colorTheme, onCente
             <div className={`pin${m.id === selectedId ? ' selected' : ''}`}>
               {m.avatar ? <img src={m.avatar} alt={m.name} referrerPolicy="no-referrer" /> : <span>{initials(m.name)}</span>}
             </div>
+            {travel[m.id] && (
+              <span className="pin-badge" title={travelTitle(travel[m.id]!)}>
+                <TravelIcon mode={travel[m.id]!.mode} size={12} />
+              </span>
+            )}
             {!selectedId && distances[m.id] && (
               <div className="pin-label">
                 {formatDistance(distances[m.id]!.straight)}
@@ -412,6 +420,7 @@ export function MapView({ token, style, relief, lightPreset, colorTheme, onCente
             mapboxToken={token}
             distance={distances[selectedMember.id]}
             city={cities[selectedMember.id]}
+            travel={travel[selectedMember.id]}
             routeKind={routeKind}
             routeInfo={routeInfo}
             routeLoading={routeLoading}

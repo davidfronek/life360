@@ -54,6 +54,8 @@ export interface MemberSnapshot {
   battery: number | null;
   charging: boolean | null;
   isDriving: boolean | null;
+  // Rychlost v m/s podle Life360 (záporná hodnota = neznámá)
+  speed: number | null;
   placeName: string | null;
   city: string | null;
   country: string | null;
@@ -64,7 +66,7 @@ export async function getSnapshot(circleId?: string): Promise<MemberSnapshot[]> 
   const r = await query(
     `SELECT m.id, m.circle_id, trim(m.first_name || ' ' || m.last_name) AS name, m.avatar_url,
             l.ts, ST_Y(l.geom::geometry) AS lat, ST_X(l.geom::geometry) AS lng,
-            l.accuracy_m, l.battery, l.charging, l.is_driving, l.place_name, g.city, g.country
+            l.accuracy_m, l.battery, l.charging, l.is_driving, l.speed, l.place_name, g.city, g.country
        FROM members m
        LEFT JOIN LATERAL (
          SELECT * FROM locations WHERE member_id = m.id ORDER BY ts DESC LIMIT 1
@@ -86,6 +88,7 @@ export async function getSnapshot(circleId?: string): Promise<MemberSnapshot[]> 
     battery: x.battery,
     charging: x.charging,
     isDriving: x.is_driving,
+    speed: x.speed !== null && x.speed >= 0 ? x.speed : null,
     placeName: x.place_name,
     city: x.city,
     country: x.country,
