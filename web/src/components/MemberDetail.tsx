@@ -49,6 +49,8 @@ interface Props {
   routeKind: RouteKind | null;
   routeInfo: RouteInfo | null;
   routeLoading: boolean;
+  follow: boolean;
+  onFollow: (follow: boolean) => void;
   onRoute: (kind: RouteKind | null) => void;
 }
 
@@ -61,7 +63,7 @@ const MODES = [
 ] as const;
 
 // Obsah tooltipu u vybraného člena na mapě
-export function MemberDetail({ member: m, events, mapboxToken, distance, city, travel, routeKind, routeInfo, routeLoading, onRoute }: Props) {
+export function MemberDetail({ member: m, events, mapboxToken, distance, city, travel, routeKind, routeInfo, routeLoading, onRoute, follow, onFollow }: Props) {
   const navApp = useNavApp();
   const mobile = isMobileDevice();
   const [copied, setCopied] = useState(false);
@@ -92,6 +94,16 @@ export function MemberDetail({ member: m, events, mapboxToken, distance, city, t
     <section className="tip">
       <div className="tip-head">
         <h3>{m.name}</h3>
+        {m.lat !== null && (
+          <button
+            className={`follow${follow ? ' active' : ''}`}
+            onClick={() => onFollow(!follow)}
+            aria-pressed={follow}
+            title={follow ? 'Sledování zapnuto – mapa zůstává na členovi (táhnutím mapy se vypne)' : 'Sledovat – udržovat mapu vycentrovanou na člena'}
+          >
+            <CrosshairIcon size={15} />
+          </button>
+        )}
         {m.battery !== null && (
           <span className={`battery${m.battery <= 15 ? ' low' : ''}`} title={m.charging ? 'Nabíjí se' : 'Baterie'}>
             <BatteryIcon level={m.battery} charging={m.charging} />

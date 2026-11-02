@@ -60,6 +60,12 @@ function Main({ onLogout }: { onLogout: () => void }) {
   };
   const [mapStyle, setMapStyle] = useState<MapStyle>('standard');
   const [relief, setRelief] = useState(true);
+  // Sledování vybraného člena (mapa zůstává vycentrovaná); pamatuje se v prohlížeči
+  const [follow, setFollowState] = useState(() => localStorage.getItem('follow') === '1');
+  const setFollow = (f: boolean) => {
+    setFollowState(f);
+    localStorage.setItem('follow', f ? '1' : '0');
+  };
   const [lightMode, setLightMode] = useState<LightMode>('auto');
   const [colorTheme, setColorTheme] = useState<ColorTheme>(() => (localStorage.getItem('mapTheme') as ColorTheme) || 'vivid');
   const [date, setDate] = useState(todayLocal());
@@ -224,6 +230,8 @@ function Main({ onLogout }: { onLogout: () => void }) {
             routeInfo={routeInfo}
             routeLoading={routeQ.isFetching}
             onRouteKind={setRouteKind}
+            follow={follow}
+            onFollow={setFollow}
             events={events.data ?? []}
             distances={distances}
             cities={cities}

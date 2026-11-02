@@ -63,10 +63,12 @@ interface Props {
   routeKind: RouteKind | null;
   routeInfo: RouteInfo | null;
   routeLoading: boolean;
+  follow: boolean;
+  onFollow: (follow: boolean) => void;
   onRouteKind: (kind: RouteKind | null) => void;
 }
 
-export function MapView({ token, style, relief, lightPreset, colorTheme, onCenterChange, members, places, selectedId, selectedPlaceId, onSelect, history, route, events, distances, cities, travel, routeKind, routeInfo, routeLoading, onRouteKind }: Props) {
+export function MapView({ token, style, relief, lightPreset, colorTheme, onCenterChange, members, places, selectedId, selectedPlaceId, onSelect, history, route, events, distances, cities, travel, routeKind, routeInfo, routeLoading, onRouteKind, follow, onFollow }: Props) {
   const mapRef = useRef<MapRef>(null);
   const fitted = useRef(false);
   const [loaded, setLoaded] = useState(false);
@@ -185,6 +187,17 @@ export function MapView({ token, style, relief, lightPreset, colorTheme, onCente
     }
   }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Sledování: při každé nové poloze vybraného člena se mapa plynule vycentruje na něj (zoom se nemění).
+  // Při změně výběru se o přiblížení stará efekt výše, proto se tehdy sledování přeskočí.
+  const followedId = useRef<string | null>(null);
+  const selLat = selectedMember?.lat;
+  const selLng = selectedMember?.lng;
+  useEffect(() => {
+    const changed = followedId.current !== selectedId;
+    followedId.current = selectedId;
+    if (!follow || changed || selLat == null || selLng == null) return;
+    mapRef.current?.easeTo({ center: [selLng, selLat], offset: [0, 70], duration: 1200 });
+  }, [follow, selectedId, selLat, selLng]);
   useEffect(() => {
     const p = places.find((x) => x.id === selectedPlaceId);
     if (!p) return;
@@ -253,6 +266,7 @@ export function MapView({ token, style, relief, lightPreset, colorTheme, onCente
       style={{ width: '100%', height: '100%' }}
       onLoad={() => setLoaded(true)}
       onMoveEnd={(e) => onCenterChange(e.viewState.latitude, e.viewState.longitude)}
+      onDragStart={() => onFollow(false)}
       onClick={() => onSelect(null)}
     >
       <Source id="terrain-dem" type="raster-dem" url="mapbox://mapbox.mapbox-terrain-dem-v1" tileSize={512} maxzoom={14} />
@@ -424,6 +438,8 @@ export function MapView({ token, style, relief, lightPreset, colorTheme, onCente
             routeKind={routeKind}
             routeInfo={routeInfo}
             routeLoading={routeLoading}
+            follow={follow}
+            onFollow={onFollow}
             onRoute={onRouteKind}
           />
         </Popup>

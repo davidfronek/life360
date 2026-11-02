@@ -191,3 +191,6 @@ button.small { padding: 2px 8px; }
 .pin-wrap .pin-badge { position: absolute; right: -4px; top: -4px; width: 20px; height: 20px; border-radius: 50%; background: #2563eb; color: #fff; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4); pointer-events: none; }
 .tip .travel-line { color: #1d4ed8; font-weight: 600; }
 .tip .travel-line .icon { color: #1d4ed8; }
+.tip-head .follow { margin-left: auto; background: #fff; color: #4b5563; border: 1px solid #d1d5db; border-radius: 8px; padding: 3px 6px; line-height: 0; }
+.tip-head .follow:hover { background: #f3f4f6; }
+.tip-head .follow.active { background: #2563eb; border-color: #2563eb; color: #fff; }
