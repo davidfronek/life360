@@ -16,6 +16,15 @@ export const TRAVEL_LABEL: Record<TravelMode, string> = {
   plane: 'Letadlo',
 };
 
+// Slovesné vyjádření pro řádek Stav
+const TRAVEL_STATE: Record<TravelMode, string> = {
+  walking: 'Jde pěšky',
+  cycling: 'Jede na kole',
+  driving: 'Jede autem',
+  train: 'Jede vlakem / tramvají',
+  plane: 'Letí',
+};
+
 // Poloha starší než tato doba už nic o aktuálním pohybu nevypovídá
 const FRESH_MS = 10 * 60_000;
 const MS_WALK = 0.8; // ≈ 3 km/h
@@ -42,9 +51,20 @@ const ROAD_CLASSES = new Set([
   'service',
 ]);
 
+export const isFresh = (m: Member) => !!m.ts && Date.now() - new Date(m.ts).getTime() <= FRESH_MS;
+
+// Co člen právě dělá: cestuje (podle způsobu), stojí (rychlost známá a nulová), nebo se neví
+// (poloha je neaktuální, nebo Life360 rychlost neposlalo)
+export function stateText(m: Member, travel?: Travel): string {
+  if (m.lat === null) return 'Poloha není známá';
+  if (travel) return `${TRAVEL_STATE[travel.mode]} · ${travel.kmh} km/h`;
+  if (!isFresh(m)) return 'Poloha není aktuální';
+  return m.speed === null ? 'Rychlost není známá' : 'Stojí';
+}
+
 // Základní určení z rychlosti a příznaku "řídí"; null = člen nikam necestuje
 function baseMode(m: Member): TravelMode | null {
-  if (!m.ts || Date.now() - new Date(m.ts).getTime() > FRESH_MS) return null;
+  if (!isFresh(m)) return null;
   const v = m.speed ?? 0;
   if (v >= MS_PLANE) return 'plane';
   if (v >= MS_DRIVE || m.isDriving) return 'driving';

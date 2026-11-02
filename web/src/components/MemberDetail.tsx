@@ -7,7 +7,7 @@ import { reverseAddress } from '../geocode';
 import { localTimeAt } from '../localTime';
 import { NAV_APPS, isMobileDevice, navigationUrl, useNavApp } from '../navApps';
 import type { RouteKind } from '../distances';
-import { TRAVEL_LABEL, type Travel } from '../travel';
+import { TRAVEL_LABEL, stateText, type Travel } from '../travel';
 import { TravelIcon } from './TravelIcon';
 import type { RouteInfo } from '../directions';
 import {
@@ -204,7 +204,7 @@ export function MemberDetail({ member: m, events, mapboxToken, distance, city, t
       )}
 
       <Row label="Místo">{m.placeName ?? 'Mimo uložená místa'}</Row>
-      <Row label="Stav">{m.isDriving ? 'Řídí' : 'Stojí / pěšky'}</Row>
+      <Row label="Stav">{stateText(m, travel)}</Row>
       {m.battery !== null && m.charging && <Row label="Baterie">{m.battery} % (nabíjí se)</Row>}
       {lt && (
         <Row label="Časové pásmo">

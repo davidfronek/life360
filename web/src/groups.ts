@@ -48,10 +48,10 @@ export function groupMembers(members: Member[], places: Place[]): Group[] {
   return groups;
 }
 
-export type Freshness = 'driving' | 'fresh' | 'stale';
+// 'moving' se určuje až podle způsobu cestování (travel.ts), ne z příznaku Life360
+export type Freshness = 'moving' | 'fresh' | 'stale';
 
 export function freshness(m: Member): Freshness {
-  if (m.isDriving) return 'driving';
   if (m.ts && Date.now() - new Date(m.ts).getTime() < 30 * 60_000) return 'fresh';
   return 'stale';
 }

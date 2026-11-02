@@ -72,7 +72,7 @@ label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; margin
 .avatar-wrap { position: relative; flex-shrink: 0; }
 .status-dot { position: absolute; right: -1px; bottom: -1px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; background: #9ca3af; }
 .status-dot.fresh { background: #22c55e; }
-.status-dot.driving { background: #2563eb; }
+.status-dot.moving { background: #2563eb; }
 .name-line { display: flex; align-items: center; gap: 6px; }
 .badge { font-size: 10px; font-weight: 700; color: #1d4ed8; background: #dbeafe; border-radius: 8px; padding: 1px 6px; }
 .list small.sub { display: flex; align-items: center; gap: 6px; }

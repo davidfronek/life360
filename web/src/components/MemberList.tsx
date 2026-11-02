@@ -2,13 +2,13 @@ import { useState } from 'react';
 import type { Member, Place } from '../api';
 import { distanceText, type Distance } from '../distances';
 import { initials, timeAgo } from '../geo';
-import { freshness, groupByCountry, groupMembers, plural, type GroupMode } from '../groups';
+import { freshness, groupByCountry, type Freshness, groupMembers, plural, type GroupMode } from '../groups';
 import { Section, useCollapsed } from './Section';
 import { BatteryIcon, GlobeIcon, HomeIcon, MapPinIcon } from './icons';
 import { TravelIcon, travelTitle } from './TravelIcon';
 import type { Travel } from '../travel';
 
-const STATUS_TITLE = { driving: 'Řídí', fresh: 'Aktuální poloha', stale: 'Poloha není aktuální' } as const;
+const STATUS_TITLE = { moving: 'Cestuje', fresh: 'Aktuální poloha', stale: 'Poloha není aktuální' } as const;
 
 export function Avatar({ m, size = 40 }: { m: Member; size?: number }) {
   const style = { width: size, height: size, fontSize: size * 0.36 };
@@ -87,7 +87,7 @@ export function MemberList({ members, places, distances, travel, cities, countri
           <ul className="list">
             {g.members.map((m) => {
               const d = distances[m.id];
-              const fr = freshness(m);
+              const fr: Freshness = travel[m.id] ? 'moving' : freshness(m);
               return (
                 <li key={m.id} className={m.id === selectedId ? 'active' : ''} onClick={() => onSelect(m.id)}>
                   <div className="avatar-wrap" title={STATUS_TITLE[fr]}>
